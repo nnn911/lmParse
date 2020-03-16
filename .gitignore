@@ -1,6 +1,5 @@
 # test files 
-log.lammps*
-test.py
+testing/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
