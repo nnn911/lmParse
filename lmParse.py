@@ -6,6 +6,7 @@ class Log:
     def __init__(self, fname=None):
         self.data = pd.DataFrame()
         self.N = []
+        self.logFiles = []
         self.run = 0
         if fname:
             self.parseLog(fname)
@@ -32,7 +33,12 @@ class Log:
     def keys(self):
         return self.data.keys()
 
+    def fileNames(self):
+        return self.logFiles
+
     def parseLog(self, fname):
+        if fname in self.logFiles:
+            raise ValueError('{} has already been parsed'.format(fname))
         newData = []
         headerline = False
         dataline = False
@@ -60,3 +66,4 @@ class Log:
                     newData.append({c: v for c, v in zip(categories, l)})
                     newData[-1]['Run'] = self.run
         self.data = self.data.append(newData, ignore_index=True)
+        self.logFiles.append(fname)
