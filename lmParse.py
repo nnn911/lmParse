@@ -49,7 +49,9 @@ class Log:
             arg = int(arg)
         except ValueError:
             raise KeyError('Only numeric indicies are allowed for runs!')
-        converged = ['force tolerance', 'energy tolerance']
+        converged = ['force tolerance',
+                     'energy tolerance',
+                     'linesearch alpha is zero']
         return self[arg]['StoppingCriterion'] in converged
 
     def keys(self):
