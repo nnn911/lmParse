@@ -19,7 +19,7 @@ class Log:
         else:
             try:
                 return self.data[arg]
-            except:
+            except KeyError:
                 raise KeyError('Key {} not found! Valid keys are:'.format(arg),
                                ' '.join(self.keys()))
 
@@ -62,8 +62,8 @@ class Log:
                     categories = line.strip().split()
                     continue
                 if (dataline) and not (headerline) and not (tailline):
-                    l = [float(v) for v in line.strip().split()]
-                    newData.append({c: v for c, v in zip(categories, l)})
+                    lines = [float(v) for v in line.strip().split()]
+                    newData.append({c: v for c, v in zip(categories, lines)})
                     newData[-1]['Run'] = self.run
         self.data = self.data.append(newData, ignore_index=True)
         self.logFiles.append(fname)
