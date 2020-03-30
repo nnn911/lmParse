@@ -44,6 +44,14 @@ class Log:
         else:
             return N
 
+    def converged(self, arg):
+        try:
+            arg = int(arg)
+        except ValueError:
+            raise KeyError('Only numeric indicies are allowed for runs!')
+        converged = ['force tolerance', 'energy tolerance']
+        return self[arg]['StoppingCriterion'] in converged
+
     def keys(self):
         return self.data.keys()
 
@@ -83,5 +91,6 @@ class Log:
                 if 'Stopping criterion' in line:
                     sc = line.split('=')[-1].strip()
                     self.runInfo[self.run-1]['StoppingCriterion'] = sc
+                    self.runInfo[self.run-1]['Converged'] = self.converged(-1)
         self.data = self.data.append(newData, ignore_index=True)
         self.logFiles.append(fname)
