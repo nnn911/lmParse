@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+import re
 
 
 class Log:
@@ -96,3 +97,38 @@ class Log:
                     self.runInfo[self.run-1]['Converged'] = self.converged(-1)
         self.data = self.data.append(newData, ignore_index=True)
         self.logFiles.append(fname)
+
+
+class elasticConstantsLog:
+    def __init__(self, fname=None):
+        if fname:
+            self.parseLog(fname)
+
+    def parseLog(self, fname):
+        self.data = {}
+        pattern = re.compile('.* (C\d\d)all = (\d+\.\d+) (\w+)')
+        with open(fname, 'r') as f:
+            for line in f:
+                match = pattern.match(line)
+                if match:
+                    if 'unit' in self.data:
+                        assert self.data['unit'] == match.groups()[2]
+                    else:
+                        self.data['unit'] = match.groups()[2]
+                    self.data[match.groups()[0].lower()] = float(
+                        match.groups()[1])
+        if len(self.data) == 0:
+            raise ValueError('{} is not a valid log file!'.format(fname))
+
+    def __getitem__(self, arg):
+        try:
+            if isinstance(arg, str):
+                return self.data[arg.lower()]
+            elif isinstance(arg, int):
+                return self.data['c{}'.format(arg)]
+            else:
+                raise KeyError()
+        except KeyError:
+            err = 'Key {} not found! Valid keys are: {}'.format(
+                arg, ' '.join(self.data.keys()))
+            raise KeyError(err)
