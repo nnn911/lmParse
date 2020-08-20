@@ -53,7 +53,10 @@ class Log:
         converged = ['force tolerance',
                      'energy tolerance',
                      'linesearch alpha is zero']
-        return self[arg]['StoppingCriterion'] in converged
+        try:
+            return self[arg]['StoppingCriterion'] in converged
+        except KeyError:
+            return False
 
     def keys(self):
         return self.data.keys()
@@ -88,7 +91,10 @@ class Log:
                     categories = line.strip().split()
                     continue
                 if (dataline) and not (headerline) and not (tailline):
-                    lines = [float(v) for v in line.strip().split()]
+                    try:
+                        lines = [float(v) for v in line.strip().split()]
+                    except ValueError:
+                        continue
                     newData.append({c: v for c, v in zip(categories, lines)})
                     newData[-1]['Run'] = self.run
                 if 'Stopping criterion' in line:
