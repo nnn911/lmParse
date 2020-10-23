@@ -150,7 +150,10 @@ class elasticConstantsLog:
             for j in range(i, self.Cmat.shape[1]):
                 self.Cmat[i, j] = self['c{}{}'.format(i+1, j+1)]
                 self.Cmat[j, i] = self.Cmat[i, j]
-        self.Smat = np.linalg.inv(self.Cmat)
+        try:
+            self.Smat = np.linalg.inv(self.Cmat)
+        except np.linalg.LinAlgError:
+            self.Smat[:, :] = np.nan
 
     def _getVRH(self):
         if np.isclose(np.sum(self.Smat), 0) or np.isclose(np.sum(self.Cmat), 0):
