@@ -24,3 +24,8 @@ Easy to use log parser for the Large-scale Atomic/Molecular Massively Parallel S
 - C11 for example can can be accessed using either using `l['c11']` or `l[11]`.
 - The units can are stored in `l['unit']`.
 - The underlying dictionary can be accessed directly using `elast = l.data`.
+### Voigt-Reuss-Hill averages
+- The Voigt, Reuss, and Voigt-Reuss-Hill bulk modulus (`l['K']`) and shear modulus (`l['G']`) are calculated automatically.
+- Youngs modulus `l['E']` and Poisson ratio `l['nu']` are available as well.
+- Calculations based on: www.doi.org/10.1088/0370-1298/65/5/307
+- `C` and `S` matrixes are stored as `numpy` arrays in `l.Cmat` and `l.Smat`, respectively.
