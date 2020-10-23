@@ -107,24 +107,11 @@ class Log:
 
 class elasticConstantsLog:
     def __init__(self, fname=None):
+        self.data = {}
+        self.Cmat = np.zeros((6, 6))
+        self.Smat = np.zeros((6, 6))
         if fname:
             self.parseLog(fname)
-
-    def parseLog(self, fname):
-        self.data = {}
-        pattern = re.compile('.* (C\d\d)all = (-?\d+\.?\d*e?-?\d?\d?\d?) (\w+)')
-        with open(fname, 'r') as f:
-            for line in f:
-                match = pattern.match(line)
-                if match:
-                    if 'unit' in self.data:
-                        assert self.data['unit'] == match.groups()[2]
-                    else:
-                        self.data['unit'] = match.groups()[2]
-                    self.data[match.groups()[0].lower()] = float(
-                        match.groups()[1])
-        if len(self.data) == 0:
-            raise ValueError('{} is not a valid log file!'.format(fname))
 
     def __getitem__(self, arg):
         try:
@@ -138,3 +125,48 @@ class elasticConstantsLog:
             err = 'Key {} not found! Valid keys are: {}'.format(
                 arg, ' '.join(self.data.keys()))
             raise KeyError(err)
+
+    def parseLog(self, fname):
+        pattern = re.compile(
+            '.* (C\d\d)all = (-?\d+\.?\d*e?-?\d?\d?\d?) (\w+)')
+        with open(fname, 'r') as f:
+            for line in f:
+                match = pattern.match(line)
+                if match:
+                    if 'unit' in self.data:
+                        assert self.data['unit'] == match.groups()[2]
+                    else:
+                        self.data['unit'] = match.groups()[2]
+                    self.data[match.groups()[0].lower()] = float(
+                        match.groups()[1])
+        if len(self.data) == 0:
+            raise ValueError('{} is not a valid log file!'.format(fname))
+        self._getVRH()
+
+    def _createCmat(self):
+        if len(self.data) == 0:
+            raise ValueError('No log file loaded!')
+        for i in range(0, self.Cmat.shape[0]):
+            for j in range(i, self.Cmat.shape[1]):
+                self.Cmat[i, j] = self['c{}{}'.format(i+1, j+1)]
+                self.Cmat[j, i] = self.Cmat[i, j]
+        self.Smat = np.linalg.inv(self.Cmat)
+
+    def _getVRH(self):
+        if np.isclose(np.sum(self.Smat), 0) or np.isclose(np.sum(self.Cmat), 0):
+            self._createCmat()
+        self.data['kv'] = ((self.Cmat[0, 0]+self.Cmat[1, 1]+self.Cmat[2, 2]) +
+                           2*(self.Cmat[0, 1]+self.Cmat[1, 2]+self.Cmat[2, 0]))/9
+        self.data['gv'] = ((self.Cmat[0, 0]+self.Cmat[1, 1]+self.Cmat[2, 2]) -
+                           (self.Cmat[0, 1]+self.Cmat[1, 2]+self.Cmat[2, 0]) +
+                           3*(self.Cmat[3, 3]+self.Cmat[4, 4]+self.Cmat[5, 5]))/15
+        self.data['kr'] = 1/((self.Smat[0, 0]+self.Smat[1, 1]+self.Smat[2, 2]) +
+                             2*(self.Smat[0, 1]+self.Smat[1, 2]+self.Smat[2, 0]))
+        self.data['gr'] = 15/(4*(self.Smat[0, 0]+self.Smat[1, 1]+self.Smat[2, 2]) -
+                              4*(self.Smat[0, 1]+self.Smat[1, 2]+self.Smat[2, 0]) +
+                              3*(self.Smat[3, 3]+self.Smat[4, 4]+self.Smat[5, 5]))
+        self.data['g'] = (self.data['gr']+self.data['gv'])/2
+        self.data['k'] = (self.data['kr']+self.data['kv'])/2
+        self.data['nu'] = 0.5*(1-(3*self.data['g']) /
+                               (3*self.data['k']+self.data['g']))
+        self.data['e'] = 1/((1/3/self.data['g']) + (1/9/self.data['k']))
