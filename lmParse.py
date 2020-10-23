@@ -128,7 +128,7 @@ class elasticConstantsLog:
 
     def parseLog(self, fname):
         pattern = re.compile(
-            '.* (C\d\d)all = (-?\d+\.?\d*e?-?\d?\d?\d?) (\w+)')
+            '.* (C\d\d)all = (-?\d+\.?\d*e?-?\+?\d?\d?\d?) (\w+)')
         with open(fname, 'r') as f:
             for line in f:
                 match = pattern.match(line)
