@@ -2,16 +2,60 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 import re
+import os
+import tempfile
 
 
-class Log:
+class LogBase:
+    def __init__(self):
+        self.localFiles = []
+        self.remoteFiles = []
+
+    def isRemoteFile(self, fname):
+        return fname.lower().startswith('ssh:') or fname.lower().startswith('sftp:')
+
+    def dowloadRemote(self, fname):
+        import subprocess as sub
+        # remote path defined as ssh:server:path or sftp:server:path
+        _, server, remoteFile = fname.split(':')
+        localFile = os.path.join(
+            tempfile.gettempdir(), str(abs(hash(remoteFile))))
+        _ = sub.check_output(['scp', f'{server}:{remoteFile}', localFile])
+        return localFile
+
+    def checkFileName(self, fname):
+        if fname in self.fileNames():
+            raise ValueError('{} has already been parsed'.format(fname))
+
+    def getFileName(self, fname):
+        if self.isRemoteFile(fname):
+            fname = self.dowloadRemote(fname)
+            self.checkFileName(fname)
+            self.remoteFiles.append(fname)
+        else:
+            self.checkFileName(fname)
+            self.localFiles.append(fname)
+        return fname
+
+    def cleanupTempFile(self, fname):
+        if os.path.split(fname)[0] == tempfile.gettempdir():
+            os.remove(fname)
+
+    def __del__(self):
+        [self.cleanupTempFile(f) for f in self.remoteFiles]
+
+
+class Log(LogBase):
     def __init__(self, fname=None):
+        super().__init__()
         self.data = pd.DataFrame()
         self.runInfo = defaultdict(dict)
-        self.logFiles = []
         self.run = 0
         if fname:
             self.parseLog(fname)
+
+    def __del__(self):
+        super().__del__()
 
     def __getitem__(self, arg):
         if isinstance(arg, str):
@@ -62,11 +106,10 @@ class Log:
         return self.data.keys()
 
     def fileNames(self):
-        return self.logFiles
+        return self.localFiles + self.remoteFiles
 
     def parseLog(self, fname):
-        if fname in self.logFiles:
-            raise ValueError('{} has already been parsed'.format(fname))
+        fname = self.getFileName(fname)
         newData = []
         headerline = False
         dataline = False
@@ -102,7 +145,6 @@ class Log:
                     self.runInfo[self.run-1]['StoppingCriterion'] = sc
                     self.runInfo[self.run-1]['Converged'] = self.converged(-1)
         self.data = self.data.append(newData, ignore_index=True)
-        self.logFiles.append(fname)
 
 
 class elasticConstantsLog:
