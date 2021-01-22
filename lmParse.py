@@ -38,7 +38,7 @@ class LogBase:
         return fname
 
     def cleanupTempFile(self, fname):
-        if os.path.split(fname)[0] == tempfile.gettempdir():
+        if (os.path.split(fname)[0] == tempfile.gettempdir()) and os.path.isfile(fname):
             os.remove(fname)
 
     def __del__(self):
@@ -88,6 +88,9 @@ class Log(LogBase):
             return N[0]
         else:
             return N
+
+    def N(self):
+        return self.getN()
 
     def converged(self, arg):
         try:
