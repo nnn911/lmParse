@@ -51,7 +51,12 @@ class Log(LogBase):
         self.data = pd.DataFrame()
         self.runInfo = defaultdict(dict)
         self.run = 0
-        if fname:
+        if fname is None:
+            pass
+        elif isinstance(fname, (list, tuple)):
+            for f in fname:
+                self.parseLog(f)
+        else:
             self.parseLog(fname)
 
     def __del__(self):
