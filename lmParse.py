@@ -107,6 +107,7 @@ class Log(LogBase):
         else:
             return N
 
+    @property
     def N(self):
         return self.getN()
 
