@@ -84,6 +84,17 @@ class Log(LogBase):
         else:
             raise KeyError("Key {} not found!".format(arg))
 
+    @staticmethod
+    def _list_dict_to_dict_of_arrays(list_of_dict):
+        ret = {}
+        for i, row in enumerate(list_of_dict):
+            for key, value in row.items():
+                if key not in ret:
+                    ret[key] = np.zeros(len(list_of_dict))
+                    ret[key][:] = np.nan
+                ret[key][i] = value
+        return ret
+
     def getN(self):
         N = np.array([self.runInfo[i]["N"] for i in range(self.run)])
         if np.all(N == N[0]):
@@ -146,7 +157,10 @@ class Log(LogBase):
                     sc = line.split("=")[-1].strip()
                     self.runInfo[self.run - 1]["StoppingCriterion"] = sc
                     self.runInfo[self.run - 1]["Converged"] = self.converged(-1)
-        self.data = self.data.append(newData, ignore_index=True)
+        self.data = pd.concat(
+            [self.data, pd.DataFrame(self._list_dict_to_dict_of_arrays(newData))],
+            ignore_index=True,
+        )
 
 
 class elasticConstantsLog:
