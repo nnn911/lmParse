@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lmParse"
+version = "2023.0"
+description = "Easy to use log parser for the Large-scale Atomic/Molecular Massively Parallel Simulator (LAMMPS)."
+keywords = ["lammps"]
+authors = [{name = "Daniel Utt", email = "utt@ovito.org"}]
+maintainers = [{name = "Daniel Utt", email = "utt@ovito.org"}]
+license = {text = "GPL-3.0 license"}
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "pandas",
+]
+
+[project.urls]
+repository = "https://github.com/nnn911/lmParse"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    "ignore:module 'sre_parse' is deprecated:DeprecationWarning",
+    "ignore:module 'sre_constants' is deprecated:DeprecationWarning",
+]

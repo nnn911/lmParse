@@ -11,6 +11,12 @@ class LogBase:
         self.localFiles = []
         self.remoteFiles = []
 
+    def __del__(self):
+        [self.cleanupTempFile(f) for f in self.remoteFiles]
+
+    def fileNames(self):
+        return self.localFiles + self.remoteFiles
+
     def isRemoteFile(self, fname):
         return fname.lower().startswith("ssh:") or fname.lower().startswith("sftp:")
 
@@ -40,9 +46,6 @@ class LogBase:
     def cleanupTempFile(self, fname):
         if (os.path.split(fname)[0] == tempfile.gettempdir()) and os.path.isfile(fname):
             os.remove(fname)
-
-    def __del__(self):
-        [self.cleanupTempFile(f) for f in self.remoteFiles]
 
 
 class Log(LogBase):
@@ -125,9 +128,6 @@ class Log(LogBase):
     def keys(self):
         return self.data.keys()
 
-    def fileNames(self):
-        return self.localFiles + self.remoteFiles
-
     def parseLog(self, fname):
         fname = self.getFileName(fname)
         newData = []
@@ -169,13 +169,17 @@ class Log(LogBase):
         )
 
 
-class elasticConstantsLog:
+class ElasticConstantsLog(LogBase):
     def __init__(self, fname=None):
+        super().__init__()
         self.data = {}
         self.Cmat = np.zeros((6, 6))
         self.Smat = np.zeros((6, 6))
         if fname:
             self.parseLog(fname)
+
+    def __del__(self):
+        super().__del__()
 
     def __getitem__(self, arg):
         try:
@@ -192,7 +196,8 @@ class elasticConstantsLog:
             raise KeyError(err)
 
     def parseLog(self, fname):
-        pattern = re.compile(".* (C\d\d)all = (-?\d+\.?\d*e?-?\+?\d?\d?\d?) (\w+)")
+        fname = self.getFileName(fname)
+        pattern = re.compile(r".* (C\d\d)all = (-?\d+\.?\d*e?-?\+?\d?\d?\d?) (\w+)")
         with open(fname, "r") as f:
             for line in f:
                 match = pattern.match(line)
